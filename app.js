@@ -1,5 +1,8 @@
+
+
 var Hangman = function(){
-	this.secretWord = 'hola';
+	this.secretWord = word;
+	
 	this.trials = ko.observable(8);
 	this.guessedWord = ko.observable('_ '.repeat(this.secretWord.length));
 
@@ -29,6 +32,17 @@ var Hangman = function(){
 		}
 		return false;
 	};
+
+	this.RandomWord = function() {
+	    var requestStr = "http://randomword.setgetgo.com/get.php";
+
+	    $.ajax({
+	        type: "GET",
+	        url: requestStr,
+	        dataType: "jsonp",
+	        jsonpCallback: 'this.complete'
+	    });
+	};	
 
 	this.newGuessedWord = function(){
 		//Refresh the underlines, if there are valid guessed words put them in
@@ -150,4 +164,16 @@ ko.bindingHandlers.enterKey = {
     ko.applyBindingsToNode(element, { event: { keyup: wrapper } }, context);
   }
 };
-ko.applyBindings(new AppViewModel());
+
+//Load word
+var word;
+var requestStr = "http://randomword.setgetgo.com/get.php";
+$.ajax({
+    type: "GET",
+    url: requestStr,
+    dataType: "jsonp",
+    success: function(data){
+		word = data.Word;
+		ko.applyBindings(new AppViewModel());
+	}
+});
