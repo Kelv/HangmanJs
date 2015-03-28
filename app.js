@@ -1,130 +1,52 @@
-
-
-var Hangman = function(){
-	this.secretWord = word;
-	
-	this.trials = ko.observable(8);
-	this.guessedWord = ko.observable('_ '.repeat(this.secretWord.length));
-
-	this.lettersGuessed = [];
-	this.showLettersGuessed = ko.computed(function(){ 
-		return this.lettersGuessed.join(' ');
-	},this);
-
-	this.message = ko.observable("Please insert a letter to guess");
-	this.msgs = ["Thats not a valid input. Please try again", "You already guessed that one", 
-				"You guessed correct", "Oh! Sorry, that one wasnt in the word","You have won!!!","Sorry, you ran out of guesses"];
-
-	this.isWordGuessed = function(){
-		// Returns true if the word has been guessed, false otherwise
-		// Checks if the word has been guessed
-		c = 0;
-		for(var i in this.lettersGuessed){
-			for(var e in this.secretWord){
-				if(this.lettersGuessed[i] === this.secretWord[e]){
-					c += 1;
-				}
-			}
-		}
-		if(c == this.secretWord.length){
-			this.message(this.msgs[4]);
-			return true;
-		}
-		return false;
-	};
-
-	this.RandomWord = function() {
-	    var requestStr = "http://randomword.setgetgo.com/get.php";
-
-	    $.ajax({
-	        type: "GET",
-	        url: requestStr,
-	        dataType: "jsonp",
-	        jsonpCallback: 'this.complete'
-	    });
-	};	
-
-	this.newGuessedWord = function(){
-		//Refresh the underlines, if there are valid guessed words put them in
-		newWord = [];
-		for(var i = 0; i < this.secretWord.length; i++){
-			if(this.lettersGuessed.indexOf(this.secretWord[i]) >=0){
-				newWord.push(this.secretWord[i]+' ');
-			}else{
-				newWord.push('_ ');
-			}
-		}
-		this.guessedWord(newWord.join(''));
-	};
-
-	this.guessLetter = function(let){
-		//Returns a message indicating if the letter was valid or not 
-		var letter = let().toLowerCase();
-
-		if(letter.length != 1 || !(/[a-z]/.test(letter))){
-			this.message(this.msgs[0]);
-		}else if(this.lettersGuessed.indexOf(letter) >= 0){
-			this.message(this.msgs[1]);
-		}else{
-			this.lettersGuessed.push(letter);
-			this.trials(this.trials()-1);
-			if(this.secretWord.indexOf(letter) >= 0){
-				this.newGuessedWord();
-				this.message(this.msgs[2]);
-			}else{
-				this.message(this.msgs[3]);
-			}
-		}
-	};
-
-	this.getHint = function(){
-		for(var i in this.guessedWord()){
-			if(this.guessedWord()[i].includes('_')){
-				console.log(this.guessedWord()[i]);
-				this.lettersGuessed.push(this.secretWord[i]);
-				this.trials(this.trials()-1);
-				this.newGuessedWord();
-				break;
-			}
-		}
-	};
-
-	this.stillGuessesLeft = function(){
-		// Show if there are any guesses left 
-		if(this.trials() <= 0){
-			this.message(this.msgs[5]);
-			return false;
-		}
-		return true;
-	};
-};
+//Random word
+var word;
 
 function AppViewModel(){
 	//Create the first instance of the game
 	this.hangman = ko.observable(new Hangman());
+	// Set input value to '' and the focus 
 	this.letter = ko.observable('');
 	$('#letter').focus();
 
+	this.NewWord = function(hangman){
+		// Generates a random word and create a new Hangman
+		var requestStr = "http://randomword.setgetgo.com/get.php";  // Random word generator API
+		// Ajax request for the word, on success set the word
+		$.ajax({
+		    type: "GET",
+		    url: requestStr,
+		    dataType: "jsonp",
+		    success: function(data){
+				word = data.Word;
+				hangman(new Hangman(word));
+			}
+		});
+	};
 
 	this.newGame = function(){
 		// Create a new instance of the game
-		this.hangman(new Hangman());
-		this.letter('');	
+		this.NewWord(this.hangman);
+		this.letter('');
+		// Remove the 'disable' attributes of the buttons
 		$('#guess').removeAttr('disabled');
 		$('#hint').removeAttr('disabled');
+		// Set the background to white
+		$('#back').css('fill','white');
 	};
 
 	this.stillPlaying = function(){
+		// Check if the game continues or is over
 		if(this.hangman().isWordGuessed()){
-			// What happens when the word is guessed
+			// If the word is guessed
+			// Set the background to green and disable the buttons
 			$('#back').css('fill','green');
 			$('#guess').attr('disabled','disabled');
 			$('#hint').attr('disabled','disabled');
 		}
 
 		if(!this.hangman().stillGuessesLeft()){
-			// What happens when there are no more guesses left
-			// Disable guess button
+			// If there are no more guesses left then its over
+			// Set the background to red and disable the buttons
 			$('#back').css('fill','red');
 			$('#guess').attr('disabled','disabled');
 			$('#hint').attr('disabled','disabled');
@@ -133,20 +55,24 @@ function AppViewModel(){
 
 	this.guess = function(){
 		// Guess the letter 
-		this.hangman().guessLetter(this.letter);
-		this.letter('');
+		if(this.hangman().trials() > 0){
+			this.hangman().guessLetter(this.letter());
+			this.letter('');
 
-		this.stillPlaying();
-		$('#letter').focus();
+			var s = this.stillPlaying();
+			$('#letter').focus();
+		}
 	};
 
 	this.hint = function(){
+		// Get a hint of the word
 		this.hangman().getHint();	
 		this.stillPlaying();
 		$('#letter').focus();
 	};
 
 	this.keyPressed = function(data, event){
+		// If the pressed key is 'Enter' then guess the letter
 		if(event.which == 13){
 			this.guess();
 		}
@@ -165,9 +91,9 @@ ko.bindingHandlers.enterKey = {
   }
 };
 
-//Load word
-var word;
-var requestStr = "http://randomword.setgetgo.com/get.php";
+// Generates a random word
+var requestStr = "http://randomword.setgetgo.com/get.php";  // Random word generator API
+// Ajax request for the word, on success set the word
 $.ajax({
     type: "GET",
     url: requestStr,
