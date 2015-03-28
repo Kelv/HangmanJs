@@ -9,17 +9,10 @@ function AppViewModel(){
 	$('#letter').focus();
 
 	this.NewWord = function(hangman){
-		// Generates a random word and create a new Hangman
-		var requestStr = "http://randomword.setgetgo.com/get.php";  // Random word generator API
-		// Ajax request for the word, on success set the word
-		$.ajax({
-		    type: "GET",
-		    url: requestStr,
-		    dataType: "jsonp",
-		    success: function(data){
-				word = data.Word;
-				hangman(new Hangman(word));
-			}
+		// Request the random word and initialize other instance of Hangman
+		requestRandomWord(function(data){
+			word = data.Word;
+			hangman(new Hangman(word));
 		});
 	};
 
@@ -91,15 +84,21 @@ ko.bindingHandlers.enterKey = {
   }
 };
 
-// Generates a random word
-var requestStr = "http://randomword.setgetgo.com/get.php";  // Random word generator API
-// Ajax request for the word, on success set the word
-$.ajax({
-    type: "GET",
-    url: requestStr,
-    dataType: "jsonp",
-    success: function(data){
-		word = data.Word;
-		ko.applyBindings(new AppViewModel());
-	}
+function requestRandomWord(onSuccess){
+	// Generates a random word
+	var requestStr = "http://randomword.setgetgo.com/get.php";  // Random word generator API
+	// Ajax request for the word, on success set the word
+	$.ajax({
+	    type: "GET",
+	    url: requestStr,
+	    dataType: "jsonp",
+	    success: function(data){
+	    	onSuccess(data);
+	    }
+	});
+};
+
+requestRandomWord(function(data){
+	word = data.Word;
+	ko.applyBindings(new AppViewModel());
 });
