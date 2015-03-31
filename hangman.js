@@ -8,7 +8,7 @@ var Hangman = function(mword){
 	// # of trials for the word to be guessed
 	this.trials = ko.observable(this.secretWord.length + 3);
 	// Create underline string for every letter in  word
-	this.guessedWord = ko.observable('_ '.repeat(this.secretWord.length));
+	this.guessedWord = ko.observable(new Array(this.secretWord.length+1).join('_ '));
 	// Create observable array for the guessed letters
 	this.lettersGuessed = ko.observableArray();
 	this.showLettersGuessed = ko.pureComputed(function(){ 

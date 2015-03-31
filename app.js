@@ -93,7 +93,15 @@ function requestRandomWord(onSuccess){
 	    url: requestStr,
 	    dataType: "jsonp",
 	    success: function(data){
-	    	onSuccess(data);
+	    	if (!data.Word){
+	    		$('#content').text("Sorry, there was a problem with the request");
+	    	}else{
+	    		onSuccess(data);	
+	    	}
+	    	
+	    },
+	    error: function(error){
+	    	$('#content').text("Sorry, server problems");
 	    }
 	});
 };
