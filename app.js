@@ -20,6 +20,7 @@ function AppViewModel(){
 		// Create a new instance of the game
 		this.NewWord(this.hangman);
 		this.letter('');
+		$('#letter').focus();
 		// Remove the 'disable' attributes of the buttons
 		$('#guess').removeAttr('disabled');
 		$('#hint').removeAttr('disabled');
